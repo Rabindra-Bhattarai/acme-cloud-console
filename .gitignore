@@ -1,0 +1,9 @@
+# Runtime artifacts — never commit these
+portal.db
+scores.db
+flag.txt
+cookies.txt
+__pycache__/
+*.pyc
+static/*.txt
+static/*.out

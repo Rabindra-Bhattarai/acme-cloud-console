@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card">
+    <h1>My profile</h1>
+    <p class="sub">Role: <span class="pill {{ 'admin' if role == 'admin' else '' }}">{{ role }}</span></p>
+    {% if saved %}<p class="ok">Profile saved.</p>{% endif %}
+    <form method="post">
+      <label for="d">Display name</label>
+      <input id="d" name="display_name" value="{{ u['display_name'] or '' }}">
+      <label for="e">Email</label>
+      <input id="e" name="email" value="{{ u['email'] or '' }}">
+      <button type="submit">Save changes</button>
+    </form>
+  </div>
+{% endblock %}

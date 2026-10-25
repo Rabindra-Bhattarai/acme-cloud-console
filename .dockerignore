@@ -1,0 +1,9 @@
+.git
+__pycache__/
+*.pyc
+portal.db
+scores.db
+flag.txt
+cookies.txt
+static/*.txt
+static/*.out

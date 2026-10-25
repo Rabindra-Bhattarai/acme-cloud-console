@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card">
+    <h1>Ticket lookup</h1>
+    <p class="sub">Open a support ticket by its ID.</p>
+    <form method="get">
+      <label for="id">Ticket ID</label>
+      <input id="id" name="id" value="{{ tid or '' }}">
+      <button type="submit">Open</button>
+    </form>
+    {% if tid is not none %}
+      {% if ticket %}
+        <table>
+          <tr><th>ID</th><td>{{ ticket["id"] }}</td></tr>
+          <tr><th>Subject</th><td>{{ ticket["subject"] }}</td></tr>
+          <tr><th>Status</th><td>{{ ticket["status"] }}</td></tr>
+          <tr><th>Assignee</th><td>{{ ticket["assignee"] }}</td></tr>
+          <tr><th>Body</th><td>{{ ticket["body"] }}</td></tr>
+        </table>
+      {% else %}
+        <p class="muted">No ticket with that ID.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endblock %}

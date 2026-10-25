@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card">
+    <h1>Welcome, {{ me["display_name"] or me["username"] }}</h1>
+    <p class="sub">You are signed in on the <strong>{{ role }}</strong> tier.</p>
+  </div>
+  <div class="card">
+    <h2>Available to you</h2>
+    <div class="tiles">
+      <a class="tile" href="/profile"><div class="t">My profile</div>
+        <div class="d">Update your details</div></a>
+      <a class="tile" href="/notes"><div class="t">My notes</div>
+        <div class="d">Private scratchpad</div></a>
+      <a class="tile" href="/staff/search"><div class="t">Customer search</div>
+        <div class="d">staff only</div></a>
+      <a class="tile" href="/staff/ticket"><div class="t">Ticket lookup</div>
+        <div class="d">staff only</div></a>
+      <a class="tile" href="/staff/diagnostics"><div class="t">Network diagnostics</div>
+        <div class="d">staff only</div></a>
+      <a class="tile" href="/admin"><div class="t">Admin panel</div>
+        <div class="d">admin only</div></a>
+    </div>
+  </div>
+{% endblock %}

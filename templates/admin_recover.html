@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card" style="max-width:420px; margin:3rem auto;">
+    <h1>Admin recovery</h1>
+    <p class="sub">Enter the admin recovery code to restore admin access.</p>
+    <form method="post">
+      <label for="c">Recovery code</label>
+      <input id="c" name="code" autofocus autocomplete="off">
+      {% if msg %}<p class="err">{{ msg }}</p>{% endif %}
+      <button type="submit">Recover</button>
+    </form>
+  </div>
+{% endblock %}

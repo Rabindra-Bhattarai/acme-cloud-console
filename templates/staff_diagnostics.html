@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card">
+    <h1>Network diagnostics</h1>
+    <p class="sub">Check whether a host is reachable from the portal server.</p>
+    <form method="post">
+      <label for="h">Host</label>
+      <input id="h" name="host" value="{{ host or '127.0.0.1' }}">
+      <button type="submit">Run check</button>
+    </form>
+    {% if done %}
+      <p class="ok">Diagnostic complete.</p>
+    {% endif %}
+  </div>
+{% endblock %}

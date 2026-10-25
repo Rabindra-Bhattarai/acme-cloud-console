@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acme Cloud Console</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    body { padding-bottom: 118px; }
+    .gamebar { position: fixed; left: 0; right: 0; bottom: 0; display: flex;
+      flex-direction: column; gap: .55rem; padding: .55rem 1rem; z-index: 50;
+      background: #0d1326; border-top: 1px solid #243049;
+      font: 14px system-ui, sans-serif; color: #9fb0cc; }
+    .gamebar .controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .progress { position: relative; display: flex; }
+    .progress .track, .progress .fill { position: absolute; top: 6px; height: 3px; border-radius: 2px; }
+    .progress .track { background: #2c3a57; }
+    .progress .fill { background: #53e39b; transition: width .4s ease; }
+    .progress .step { flex: 1; text-align: center; position: relative; z-index: 1;
+      font-size: 11px; color: #5b6b86; }
+    .progress .step .dot { width: 14px; height: 14px; border-radius: 50%; margin: 0 auto 3px;
+      background: #2c3a57; border: 2px solid #0d1326; box-sizing: content-box; }
+    .progress .step.done { color: #cdd9ef; }
+    .progress .step.done .dot { background: #53e39b; }
+    .progress .step.current { color: #ffd36b; font-weight: 700; }
+    .progress .step.current .dot { background: #ffd36b; box-shadow: 0 0 0 3px rgba(255,211,107,.25); }
+    .gamebar .gbseg { display: flex; gap: .5rem; align-items: center; flex: 1;
+      min-width: 240px; flex-wrap: wrap; }
+    .gamebar input { flex: 1; min-width: 160px; padding: .4rem .6rem; border-radius: 6px;
+      border: 1px solid #2c3a57; background: #0a1020; color: #e8eefc; }
+    .gamebar button { padding: .4rem .9rem; border: 0; border-radius: 6px; cursor: pointer;
+      background: #5b6cff; color: #fff; font-weight: 600; }
+    .gamebar button.ghost { background: transparent; border: 1px solid #2c3a57; color: #9fb0cc; }
+    .timer { font-variant-numeric: tabular-nums; font-weight: 700; color: #ffd36b;
+      padding: .2rem .5rem; }
+    .donemsg { color: #53e39b; font-weight: 700; }
+    .flagmsg { color: #ff8a8a; }
+    .modal-overlay { position: fixed; inset: 0; display: none; align-items: center;
+      justify-content: center; background: rgba(2,6,20,.82); z-index: 100; }
+    .modal-overlay.show { display: flex; }
+    .modal-box { max-width: 480px; width: 90%; text-align: center; padding: 2rem; border-radius: 14px;
+      background: #121a30; border: 1px solid #2c3a57; color: #e8eefc;
+      font: 16px system-ui, sans-serif; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+    .modal-emoji { font-size: 3rem; }
+    .modal-box h2 { color: #53e39b; margin: .4rem 0; }
+    .modal-box .wintime { color: #ffd36b; }
+    .modal-box button { margin-top: 1rem; padding: .5rem 1.2rem; border: 0; border-radius: 8px;
+      cursor: pointer; background: #5b6cff; color: #fff; font-weight: 600; }
+    table.lb { width: 100%; border-collapse: collapse; margin-top: .5rem; font-size: 15px; }
+    table.lb th, table.lb td { padding: .45rem .6rem; border-bottom: 1px solid #243049; text-align: left; }
+    table.lb th { color: #9fb0cc; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="banner">{{ banner }}</div>
+  <header class="topbar">
+    <div class="brand"><span class="logo">A</span> Acme Cloud</div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      {% if me %}
+        <a href="/dashboard">Dashboard</a>
+        <a href="/profile">Profile</a>
+        <a href="/notes">Notes</a>
+        {% if role in ('staff', 'admin') %}<a href="/staff/search">Search</a>
+          <a href="/staff/ticket">Tickets</a>
+          <a href="/staff/diagnostics">Diagnostics</a>{% endif %}
+        {% if role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
+        <span class="who">{{ me["username"] }}
+          <span class="pill {{ 'admin' if role == 'admin' else '' }}">{{ role }}</span>
+        </span>
+        <a href="/logout">Logout</a>
+      {% else %}
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="gamebar">
+    <div class="progress" id="progress"></div>
+    <div class="controls">
+      <button id="lbBtn" type="button" class="ghost">&#127942; Leaderboard</button>
+      <div id="preStart" class="gbseg">
+        <input id="handle" placeholder="Your name" autocomplete="off" maxlength="24">
+        <button id="startBtn" type="button">&#9654; Start challenge</button>
+      </div>
+      <div id="running" class="gbseg" style="display:none">
+        <span class="timer">&#9201; <span id="timer">0:00</span></span>
+        <input id="flagInput" placeholder="Paste the flag (ACME{...})" autocomplete="off">
+        <button id="flagBtn" type="button">Submit flag</button>
+        <span id="flagMsg" class="flagmsg"></span>
+      </div>
+      <div id="doneSeg" class="gbseg" style="display:none">
+        <span class="donemsg">&#9989; Completed in <span id="doneTime"></span>s</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="winModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-emoji">&#127881;</div>
+      <h2>Congratulations &mdash; task complete!</h2>
+      <p>You chained the vulnerabilities all the way to remote code execution and
+         recovered the flag. Nicely done.</p>
+      <p class="wintime" id="winTimeWrap">Your time: <strong><span id="winTime"></span></strong> seconds</p>
+      <button data-close type="button">Close</button>
+    </div>
+  </div>
+
+  <div id="lbModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <h2 style="color:#ffd36b">&#127942; Top 10</h2>
+      <table class="lb">
+        <thead><tr><th>#</th><th>Player</th><th>Time</th></tr></thead>
+        <tbody id="lbBody"></tbody>
+      </table>
+      <button data-close type="button">Close</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+      function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+      function lsDel(k){ try { localStorage.removeItem(k); } catch(e){} }
+      function fmt(s){ s=Math.max(0,s); var m=Math.floor(s/60), ss=Math.floor(s%60);
+        return m + ':' + String(ss).padStart(2,'0'); }
+      function esc(x){ return String(x).replace(/[&<>"]/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+      var pre = document.getElementById('preStart');
+      var run = document.getElementById('running');
+      var done = document.getElementById('doneSeg');
+      var timerEl = document.getElementById('timer');
+      var tick = null;
+
+      function showRunning(startedAt){
+        pre.style.display='none'; done.style.display='none'; run.style.display='';
+        if (tick) clearInterval(tick);
+        function upd(){ timerEl.textContent = fmt((Date.now()/1000) - startedAt); }
+        upd(); tick = setInterval(upd, 500);
+      }
+      function showDone(secs){
+        if (tick) clearInterval(tick);
+        pre.style.display='none'; run.style.display='none'; done.style.display='';
+        document.getElementById('doneTime').textContent = secs;
+      }
+      function showPre(){ pre.style.display=''; run.style.display='none'; done.style.display='none'; }
+
+      if (lsGet('acmeDone')) showDone(lsGet('acmeDoneSecs'));
+      else if (lsGet('acmeStart')) showRunning(parseFloat(lsGet('acmeStart')));
+      else showPre();
+
+      document.getElementById('startBtn').addEventListener('click', function(){
+        var h = (document.getElementById('handle').value || 'anon').trim();
+        fetch('/start', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ handle: h }) })
+          .then(function(r){ return r.json(); }).then(function(d){
+            lsSet('acmeStart', d.started_at); lsSet('acmeHandle', h);
+            lsDel('acmeDone'); lsDel('acmeDoneSecs');
+            showRunning(d.started_at);
+            refreshProgress();
+          });
+      });
+
+      function submitFlag(){
+        var msg = document.getElementById('flagMsg'); msg.textContent='';
+        var val = document.getElementById('flagInput').value.trim();
+        fetch('/submit', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ flag: val }) })
+          .then(function(r){ return r.json(); }).then(function(d){
+            if (d && d.ok) {
+              var wrap = document.getElementById('winTimeWrap');
+              if (d.seconds != null) {
+                lsSet('acmeDone','1'); lsSet('acmeDoneSecs', d.seconds); lsDel('acmeStart');
+                showDone(d.seconds);
+                document.getElementById('winTime').textContent = d.seconds;
+                wrap.style.display = '';
+              } else { wrap.style.display = 'none'; }
+              document.getElementById('winModal').classList.add('show');
+              loadBoard();
+            } else { msg.textContent = 'Not the flag — keep going.'; }
+            refreshProgress();
+          }).catch(function(){ msg.textContent = 'Error submitting.'; });
+      }
+      var fb = document.getElementById('flagBtn');
+      if (fb) fb.addEventListener('click', submitFlag);
+      var fi = document.getElementById('flagInput');
+      if (fi) fi.addEventListener('keydown', function(e){ if (e.key==='Enter') submitFlag(); });
+
+      function loadBoard(){
+        fetch('/leaderboard').then(function(r){ return r.json(); }).then(function(d){
+          var b = document.getElementById('lbBody'); b.innerHTML='';
+          var rows = (d && d.top) || [];
+          if (!rows.length) { b.innerHTML = '<tr><td colspan="3">No finishers yet — be the first!</td></tr>'; return; }
+          rows.forEach(function(row, i){
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + (i+1) + '</td><td>' + esc(row.handle) +
+              '</td><td>' + fmt(row.seconds) + ' (' + row.seconds + 's)</td>';
+            b.appendChild(tr);
+          });
+        });
+      }
+      document.getElementById('lbBtn').addEventListener('click', function(){
+        loadBoard(); document.getElementById('lbModal').classList.add('show');
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function(btn){
+        btn.addEventListener('click', function(){ this.closest('.modal-overlay').classList.remove('show'); });
+      });
+
+      function renderProgress(d){
+        var steps = d.steps, N = steps.length, level = d.level, edge = 50 / N;
+        var fillW = level <= 0 ? 0 : ((Math.min(level, N) - 1) / (N - 1)) * (100 - 2 * edge);
+        var html = '<div class="track" style="left:' + edge + '%;right:' + edge + '%"></div>'
+                 + '<div class="fill" style="left:' + edge + '%;width:' + fillW + '%"></div>';
+        steps.forEach(function (st) {
+          var cls = st.s === 'done' ? 'done' : (st.s === 'current' ? 'current' : '');
+          html += '<div class="step ' + cls + '"><div class="dot"></div>' + esc(st.t) + '</div>';
+        });
+        document.getElementById('progress').innerHTML = html;
+      }
+      function refreshProgress(){
+        fetch('/progress').then(function (r) { return r.json(); }).then(function (d) {
+          if (d && d.steps) renderProgress(d);
+        }).catch(function () {});
+      }
+      refreshProgress();
+      setInterval(refreshProgress, 4000);
+    })();
+  </script>
+</body>
+</html>

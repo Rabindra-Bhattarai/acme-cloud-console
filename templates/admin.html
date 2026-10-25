@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card" style="border-color:#5a4a1e">
+    <h1 class="ok">🏁 You reached admin</h1>
+    <p class="sub">Full user &rarr; staff &rarr; RCE &rarr; admin chain complete.
+      Submit the code in the bar below to lock in your time. Nicely done.</p>
+  </div>
+  <div class="card">
+    <h2>User accounts</h2>
+    <table>
+      <tr><th>Username</th><th>Role</th><th>Email</th></tr>
+      {% for u in users %}
+        <tr><td>{{ u["username"] }}</td><td>{{ u["role"] }}</td><td>{{ u["email"] }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

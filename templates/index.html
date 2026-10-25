@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card">
+    <h1>Acme Cloud Console</h1>
+    <p class="sub">A multi-tenant console for Acme customers and staff.
+      Sign up for a free account, or sign in to manage your profile.</p>
+    <div class="tiles">
+      <a class="tile" href="/register"><div class="t">Create account &rarr;</div>
+        <div class="d">Free, instant</div></a>
+      <a class="tile" href="/login"><div class="t">Sign in &rarr;</div>
+        <div class="d">Existing users</div></a>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Access tiers</h2>
+    <ul class="kv">
+      <li><span>user</span><span>Manage your own profile</span></li>
+      <li><span>staff</span><span>Customer search &amp; support tools</span></li>
+      <li><span>admin</span><span>User management &amp; maintenance console</span></li>
+    </ul>
+  </div>
+{% endblock %}

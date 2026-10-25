@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card" style="text-align:center">
+    <h1 style="color:var(--danger)">403 &mdash; {{ need }} access required</h1>
+    <p class="sub">Your current tier is <strong>{{ role or 'anonymous' }}</strong>.
+      You need to be <strong>{{ need }}</strong> to see this.</p>
+  </div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="card">
+    <h1>Customer search</h1>
+    <p class="sub">Look up a customer by exact name.</p>
+    <form method="get">
+      <label for="q">Name</label>
+      <input id="q" name="q" value="{{ q or '' }}">
+      <button type="submit">Search</button>
+    </form>
+    {% if result == 'found' %}
+      <p class="ok">A matching customer exists.</p>
+    {% elif result == 'none' %}
+      <p class="muted">No matching customer.</p>
+    {% elif result == 'error' %}
+      <p class="err">Query error.</p>
+    {% elif result == 'blocked' %}
+      <p class="err">Request blocked by input filter.</p>
+    {% endif %}
+  </div>
+{% endblock %}
